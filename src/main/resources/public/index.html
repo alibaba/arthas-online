@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+    crossorigin="anonymous">
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+    crossorigin="anonymous"></script>
+
+
+
+  <link href="xterm.css" rel="stylesheet" />
+  <script src="xterm.js" type="text/javascript"></script>
+  <script src="web-console.js"></script>
+  <title>Arthas Online</title>
+
+</head>
+
+<body>
+  <div id="app">
+
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col-4">
+          <div class="row">
+
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+              <a href="https://github.com/alibaba/arthas" target="_blank" title="" class="navbar-brand"><img src="logo.png"
+                  alt="Arthas" title="welcome to Arthas web console" style="height: 25px;" class="img-responsive"></a>
+
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                  <li class="nav-item active">
+                    <a class="nav-link" href="https://alibaba.github.io/arthas" target="_blank">Documentation <span
+                        class="sr-only">(current)</span></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="https://github.com/alibaba/arthas" target="_blank" >Github</a>
+                  </li>
+
+                  <li class="nav-item">
+                    <select v-model="language" class="custom-select" v-on:change="languageChange($event)">
+                      <option v-for="l in languages" v-bind:value="l.value">
+                        {{ l.text }}
+                      </option>
+                    </select>
+                  </li>
+
+
+                </ul>
+              </div>
+            </nav>
+
+          </div>
+
+          <div class="row-12">
+
+            <div class="accordion" id="commands">
+              <div v-for="(doc, index) in docs[this.language]" class="card">
+                <div class="card-header" v-bind:id="'heading' + index">
+                  <h2 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" v-bind:data-target="'#collapse' + index"
+                      aria-expanded="true" v-bind:aria-controls="'collapse' + index">
+                      {{doc.command}}
+                    </button>
+                  </h2>
+                </div>
+
+                <div v-bind:id="'collapse' + index" class="collapse" v-bind:aria-labelledby="'heading' + index"
+                  data-parent="#commands">
+                  <div class="card-body">
+                    {{doc.description}}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="col-8">
+          <div class="row">
+            <form class="form-inline">
+              <div class="col">
+                <div class="input-group ">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="ip-addon">IP</span>
+                  </div>
+                  <input type="text" class="form-control" name="ip" id="ip" value="127.0.0.1" placeholder="please enter ip address"
+                    aria-label="ip" aria-describedby="ip-addon">
+                </div>
+              </div>
+
+              <div class="col">
+
+                <div class="input-group ">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="port-addon">Port</span>
+                  </div>
+                  <input type="text" class="form-control" name="port" id="port" value="8563" placeholder="please enter port"
+                    aria-label="port" aria-describedby="port-addon">
+                </div>
+              </div>
+
+              <div class="col">
+                <button title="connect" type="button" class="btn btn-info form-control" onclick="startConnect()">Connect</button>
+                <button title="disconnect" type="button" class="btn btn-info form-control" onclick="disconnect()">Disconnect</button>
+              </div>
+
+
+
+            </form>
+          </div>
+
+          <div class="row">
+            <div class="col-12" id="terminal-card">
+              <div id="terminal"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div> <!-- container -->
+  </div> <!-- app -->
+</body>
+
+<script>
+  // Vue.use(VueMarkdown);
+
+  var app = new Vue({
+    el: '#app',
+    data: {
+      message: 'Hello Vue!',
+      language: 'cn',
+      languages: [
+        { text: 'English', value: 'en' },
+        { text: '中文', value: 'cn' }
+      ],
+      docs: {
+        "cn": [
+          {
+            command: 'dashboard',
+            step: 'dashboard',
+            description: '当前系统的实时数据面板，按 ctrl+c 退出。'
+          },
+          {
+            command: 'thread',
+            step: 'thread 1',
+            description: '查看当前线程信息，查看线程的堆栈'
+          },
+        ],
+        "en": [
+          {
+            command: 'dashboard',
+            step: 'dashboard',
+            description: 'This is the real time statistics dashboard for the current system, press Ctrl+C to exit.'
+          },
+          {
+            command: 'thread',
+            step: 'thread 1',
+            description: 'Check the basic info and stack trace of the target thread.'
+          },
+        ]
+
+      },
+    },
+    methods: {
+      languageChange: function (event) {
+        // alert(event.target.value)
+
+
+
+      }
+    }
+  })
+
+
+</script>
+
+</html>
