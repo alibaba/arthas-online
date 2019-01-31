@@ -7,26 +7,26 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.ResponseEntity;
 
-public class RestResult {
-	boolean success;
+public class Result {
+	boolean success = true;
 
 	Map<String, Object> result;
 
 	Map<String, Object> error;
 
-	public static RestResultBuilder builder() {
-		return new RestResultBuilder();
+	public static ResultBuilder builder() {
+		return new ResultBuilder();
 	}
 
-	public static RestResultBuilder success() {
-		return new RestResultBuilder().success();
+	public static ResultBuilder success() {
+		return new ResultBuilder().success();
 	}
 
-	public static RestResultBuilder fail() {
-		return new RestResultBuilder().fail();
+	public static ResultBuilder fail() {
+		return new ResultBuilder().fail();
 	}
 
-	public ResponseEntity<RestResult> toResponseEntity() {
+	public ResponseEntity<Result> toResponseEntity() {
 		if (success) {
 			return ResponseEntity.ok(this);
 		} else {
@@ -34,55 +34,55 @@ public class RestResult {
 		}
 	}
 
-	public static class RestResultBuilder {
+	public static class ResultBuilder {
 		int status = HttpServletResponse.SC_OK;
-		RestResult result = new RestResult();
+		Result result = new Result();
 
-		public RestResultBuilder status(int status) {
+		public ResultBuilder status(int status) {
 			this.status = status;
 			return this;
 		}
 
-		public RestResultBuilder success() {
+		public ResultBuilder success() {
 			result.setSuccess(true);
 			return status(HttpServletResponse.SC_OK);
 		}
 
-		public RestResultBuilder fail() {
+		public ResultBuilder fail() {
 			result.setSuccess(false);
 			return status(HttpServletResponse.SC_BAD_REQUEST);
 		}
 
-		public RestResultBuilder withErrorCode(int code) {
+		public ResultBuilder withErrorCode(int code) {
 			result.putError("code", code);
 			return this;
 		}
 
-		public RestResultBuilder withErrorTyep(String type) {
+		public ResultBuilder withErrorTyep(String type) {
 			result.putError("type", type);
 			return this;
 		}
 
-		public RestResultBuilder withErrorMessage(String message) {
+		public ResultBuilder withErrorMessage(String message) {
 			result.putError("message", message);
 			return this;
 		}
 
-		public RestResultBuilder withError(String key, Object value) {
+		public ResultBuilder withError(String key, Object value) {
 			result.putError(key, value);
 			return this;
 		}
 
-		public RestResultBuilder withResult(String key, Object value) {
+		public ResultBuilder withResult(String key, Object value) {
 			result.putResult(key, value);
 			return this;
 		}
 
-		public ResponseEntity<RestResult> build() {
+		public ResponseEntity<Result> buildRestResult() {
 			return ResponseEntity.status(status).body(result);
 		}
 
-		public RestResult buildRestResult() {
+		public Result build() {
 			return result;
 		}
 

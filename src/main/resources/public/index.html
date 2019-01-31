@@ -11,6 +11,7 @@
     crossorigin="anonymous">
 
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -55,7 +56,7 @@
                         class="sr-only">(current)</span></a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="https://github.com/alibaba/arthas" target="_blank" >Github</a>
+                    <a class="nav-link" href="https://github.com/alibaba/arthas" target="_blank">Github</a>
                   </li>
 
                   <li class="nav-item">
@@ -106,7 +107,7 @@
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="ip-addon">IP</span>
                   </div>
-                  <input type="text" class="form-control" name="ip" id="ip" value="127.0.0.1" placeholder="please enter ip address"
+                  <input v-model="ip" type="text" class="form-control" name="ip" id="ip" placeholder="please enter ip address"
                     aria-label="ip" aria-describedby="ip-addon">
                 </div>
               </div>
@@ -117,17 +118,16 @@
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="port-addon">Port</span>
                   </div>
-                  <input type="text" class="form-control" name="port" id="port" value="8563" placeholder="please enter port"
+                  <input v-model="port" type="text" class="form-control" name="port" id="port" placeholder="please enter port"
                     aria-label="port" aria-describedby="port-addon">
                 </div>
               </div>
 
-              <div class="col">
+              <div class="col-inline">
                 <button title="connect" type="button" class="btn btn-info form-control" onclick="startConnect()">Connect</button>
                 <button title="disconnect" type="button" class="btn btn-info form-control" onclick="disconnect()">Disconnect</button>
+                <button title="stop" type="button" class="btn btn-info form-control" v-on:click="stop">Stop</button>
               </div>
-
-
 
             </form>
           </div>
@@ -153,7 +153,9 @@
     el: '#app',
     data: {
       message: 'Hello Vue!',
-      language: 'cn',
+      ip: '127.0.0.1',
+      port: '',
+      language: 'en',
       languages: [
         { text: 'English', value: 'en' },
         { text: '中文', value: 'cn' }
@@ -189,10 +191,26 @@
     methods: {
       languageChange: function (event) {
         // alert(event.target.value)
+      },
+      stop: function (event) {
+        axios
+          .get('container/stop')
+          .then(function (response) {
+            alert("stop success.");
 
+            ws.onmessage = null;
+            ws.onclose = null;
+            ws = null;
+            xterm.destroy();
+            $('#fullSc').hide();
 
-
+          })
       }
+    },
+    beforeMount() {
+      axios
+        .get('container/getOrStart')
+        .then(response => (this.port = response.data.result.port))
     }
   })
 

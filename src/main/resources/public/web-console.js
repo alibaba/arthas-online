@@ -1,20 +1,20 @@
 var ws;
 var xterm;
 
-jQuery(document).ready(function () {
-    var url = window.location.href;
-    var ip = getUrlParam('ip');
-    var port = getUrlParam('port');
+// jQuery(document).ready(function () {
+//     var url = window.location.href;
+//     var ip = getUrlParam('ip');
+//     var port = getUrlParam('port');
 
-    if (ip != '' && ip != null) {
-        $('#ip').val(ip);
-    }
-    if (port != '' && port != null) {
-        $('#port').val(port);
-    }
+//     if (ip != '' && ip != null) {
+//         $('#ip').val(ip);
+//     }
+//     if (port != '' && port != null) {
+//         $('#port').val(port);
+//     }
 
-    startConnect(true);
-});
+//     startConnect(true);
+// });
 
 /** get params in url **/
 function getUrlParam (name, url) {

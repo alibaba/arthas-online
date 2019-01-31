@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.SocketUtils;
 
+import com.alibaba.arthas.online.web.Result;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.ContainerConfig;
@@ -25,6 +26,7 @@ import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.HostConfig;
 import com.spotify.docker.client.messages.PortBinding;
+import com.spotify.docker.client.shaded.com.google.common.collect.ImmutableMap;
 
 @Service
 public class DockerService {
@@ -58,7 +60,7 @@ public class DockerService {
 		}
 	}
 
-	public String startContainer() throws DockerException, InterruptedException {
+	public Result startContainer() throws DockerException, InterruptedException {
 
 		int tcpPort = SocketUtils.findAvailableTcpPort(10000);
 
@@ -80,12 +82,12 @@ public class DockerService {
 		final String id = creation.id();
 
 		// Inspect container
-		final ContainerInfo info = dockerClient.inspectContainer(id);
+		final ContainerInfo containerInfo = dockerClient.inspectContainer(id);
 
 		// Start container
 		dockerClient.startContainer(id);
 
-		return id;
+		return Result.success().withResult("containerId", id).withResult("port", tcpPort).build();
 	}
 
 	public void stopContainer(String containerId) throws DockerException, InterruptedException {

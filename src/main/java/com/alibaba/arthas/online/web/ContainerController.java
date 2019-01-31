@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
 import com.alibaba.arthas.online.DockerService;
-import com.alibaba.arthas.online.web.RestResult.RestResultBuilder;
+import com.alibaba.arthas.online.web.Result.ResultBuilder;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.ContainerInfo;
 import com.spotify.docker.client.messages.PortBinding;
@@ -32,36 +32,74 @@ public class ContainerController {
 
 	@RequestMapping("/get")
 	@ResponseBody
-	public ResponseEntity<RestResult> getContainer(@SessionAttribute(required = false) String containerId,
+	public ResponseEntity<Result> getContainer(@SessionAttribute(required = false) String containerId,
 			HttpSession session) throws DockerException, InterruptedException {
 		String id = session.getId();
 
-		RestResultBuilder resultBuilder = RestResult.builder();
+		ResultBuilder resultBuilder = Result.builder();
 
 		if (StringUtils.isEmpty(containerId)) {
 			resultBuilder.withError("exist", false);
-			return resultBuilder.fail().build();
+			return resultBuilder.fail().buildRestResult();
 		}
 
 		ContainerInfo containerInfo = dockerService.queryConatiner(containerId);
 
-		resultBuilder.withResult("exist", containerInfo.state().running());
+		Boolean running = containerInfo.state().running();
 
-		ImmutableMap<String, List<PortBinding>> ports = containerInfo.networkSettings().ports();
+		resultBuilder.withResult("exist", running);
 
-		List<PortBinding> bindings = ports.get("8563/tcp");
+		if(Boolean.TRUE.equals(running)) {
+			ImmutableMap<String, List<PortBinding>> ports = containerInfo.networkSettings().ports();
 
-		PortBinding portBinding = bindings.get(0);
+			List<PortBinding> bindings = ports.get("8563/tcp");
 
-		resultBuilder.withResult("port", portBinding.hostPort())
-		.withResult("containerId", containerId);
+			PortBinding portBinding = bindings.get(0);
 
-		return resultBuilder.build();
+			resultBuilder.withResult("port", portBinding.hostPort())
+			.withResult("containerId", containerId);
+		}
+
+		return resultBuilder.buildRestResult();
+	}
+
+	@RequestMapping("/getOrStart")
+	@ResponseBody
+	public ResponseEntity<Result> getOrStartContainer(@SessionAttribute(required = false) String containerId,
+			HttpSession session) throws DockerException, InterruptedException {
+		Result result = null;
+
+		if (StringUtils.isNotEmpty(containerId)) {
+			ContainerInfo containerInfo = dockerService.queryConatiner(containerId);
+			Boolean running = containerInfo.state().running();
+
+			if(Boolean.TRUE.equals(running)) {
+				ResultBuilder resultBuilder = Result.builder();
+
+				ImmutableMap<String, List<PortBinding>> ports = containerInfo.networkSettings().ports();
+
+				List<PortBinding> bindings = ports.get("8563/tcp");
+
+				PortBinding portBinding = bindings.get(0);
+
+				resultBuilder.withResult("port", portBinding.hostPort())
+				.withResult("containerId", containerId);
+
+				result = resultBuilder.build();
+			}
+		}
+
+		if(result == null) {
+			result = dockerService.startContainer();
+			session.setAttribute("containerId", result.getResult().get("containerId"));
+		}
+
+		return result.toResponseEntity();
 	}
 
 	@RequestMapping("/start")
 	@ResponseBody
-	public ResponseEntity<RestResult> startContainer(@SessionAttribute(required = false) String containerId,
+	public ResponseEntity<Result> startContainer(@SessionAttribute(required = false) String containerId,
 			HttpSession session) throws DockerException, InterruptedException {
 
 		if (containerId != null) {
@@ -72,19 +110,19 @@ public class ContainerController {
 			}
 		}
 
-		String id = dockerService.startContainer();
+		Result result = dockerService.startContainer();
 
-		session.setAttribute("containerId", id);
+		session.setAttribute("containerId", result.getResult().get("id"));
 
-		return RestResult.success().withResult("containerId", id).build();
+		return result.toResponseEntity();
 	}
 
 	@RequestMapping("/stop")
 	@ResponseBody
-	public ResponseEntity<RestResult> stopContainer(@SessionAttribute(required = false) String containerId,
+	public ResponseEntity<Result> stopContainer(@SessionAttribute(required = false) String containerId,
 			HttpSession session) throws DockerException, InterruptedException {
 		dockerService.stopContainer(containerId);
-		return RestResult.success().withResult("containerId", containerId).build();
+		return Result.success().withResult("containerId", containerId).buildRestResult();
 	}
 
 }
